@@ -1,0 +1,12 @@
+{
+  "name": "card-skimmer",
+  "version": "1.0.0",
+  "description": "Um sistema de captura de dados de cartões",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
